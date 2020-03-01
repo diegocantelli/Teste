@@ -1,4 +1,5 @@
 ﻿using DCGP.TesteGol.Domain;
+using DCGP.TesteGol.Domain.DTOs;
 using DCGP.TesteGol.Infra.EF;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,10 @@ namespace DCGP.TesteGol.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            return Ok(await _context.Airplanes.ToListAsync());
+            return Ok(await _context.Airplanes
+                .OrderBy(x=> x.Modelo)
+                .Select(x => new AirplaneDTO(x.Id, x.Modelo, x.QtdPassageiros, x.DataCriacaoRegistro))
+                .ToListAsync());
         }
 
         [HttpGet("{id}")]
@@ -49,6 +53,20 @@ namespace DCGP.TesteGol.Api.Controllers
             if (airplane == null) return NotFound();
 
             return Ok(airplane);
+        }
+
+        [HttpGet("modelo/{modelo}")]
+        public async Task<IActionResult> GetByModelo(string modelo)
+        {
+            if (string.IsNullOrEmpty(modelo)) return BadRequest();
+
+            var modeloDB = await _context.Airplanes.Where(x => x.Modelo == modelo)
+                .OrderBy(x=>x.Modelo)
+                .ToListAsync();
+
+            if (modeloDB == null) return NotFound();
+
+            return Ok(modeloDB);
         }
 
         [HttpDelete("{id}")]
